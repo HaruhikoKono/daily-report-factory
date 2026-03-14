@@ -1,0 +1,853 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>配送レポート入力</title>
+  <style>
+    :root{
+      --bg:#f6f7f9;
+      --card:#fff;
+      --line:#e6e8ee;
+      --text:#111827;
+      --muted:#6b7280;
+      --accent:#0b5;
+      --danger:#c33;
+      --warn:#b45309;
+      --shadow: 0 6px 20px rgba(0,0,0,.06);
+      --radius: 14px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 16px; /* 文字が小さい対策 */
+    }
+
+    .wrap{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    .header{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap: 12px;
+      margin: 6px 0 16px;
+      flex-wrap: wrap;
+    }
+    .header h1{
+      font-size: 22px;
+      margin: 0;
+      letter-spacing: .02em;
+    }
+    .header .sub{
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .card{
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .section-title{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      margin: 0 0 10px;
+      flex-wrap: wrap;
+    }
+    .section-title h2, .section-title h3{
+      margin: 0;
+      font-size: 16px;
+    }
+
+    /* 1行表示（スマホでも縦積みにしない） */
+    .row{
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 10px;
+      align-items: center;
+      margin: 10px 0;
+    }
+
+    .row2{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    label{
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+    .hint{
+      display:block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 12px;
+      white-space: normal;
+    }
+
+    input, select, textarea{
+      width: 100%;
+      padding: 10px 10px;
+      border: 1px solid #cfd4dc;
+      border-radius: 10px;
+      background: #fff;
+      outline: none;
+      font-size: 16px;
+    }
+    textarea{ min-height: 80px; resize: vertical; }
+
+    input:focus, select:focus, textarea:focus{
+      border-color: rgba(11, 85, 0, .65);
+      box-shadow: 0 0 0 3px rgba(0, 187, 85, .14);
+    }
+
+    .btn{
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid #9aa3af;
+      background: #fff;
+      cursor: pointer;
+      font-weight: 900;
+      letter-spacing: .02em;
+      white-space: nowrap;
+      font-size: 15px;
+    }
+    .btn:hover{ filter: brightness(.98); }
+    .btn:active{ transform: translateY(1px); }
+
+    .btn.primary{
+      border-color: rgba(11, 85, 0, .9);
+      background: rgba(0, 187, 85, .10);
+    }
+    .btn.danger{
+      border-color: rgba(204, 51, 51, .9);
+      background: rgba(204, 51, 51, .08);
+    }
+    .btn.ghost{
+      border-color: #cfd4dc;
+      background: #fff;
+      font-weight: 900;
+    }
+
+    .muted{ color: var(--muted); font-size: 12px; }
+    .ok{ color:#0a6; font-weight:900; }
+    .ng{ color: var(--danger); font-weight:900; }
+
+    .footer-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .statusline{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    pre{
+      white-space: pre-wrap;
+      background: #0b1220;
+      color: #e5e7eb;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.08);
+      margin-top: 12px;
+      overflow:auto;
+      max-height: 340px;
+      font-size: 13px;
+    }
+    code{
+      background: rgba(0,0,0,.06);
+      padding: 2px 6px;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+
+    /* 必須チェック表示 */
+    .error-banner{
+      display:none;
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(204,51,51,.35);
+      background: rgba(204,51,51,.08);
+      color: #7f1d1d;
+      font-weight: 900;
+      line-height: 1.4;
+      white-space: pre-line;
+    }
+    .error-banner.show{ display:block; }
+
+    .is-error{
+      border-color: rgba(204,51,51,.95) !important;
+      box-shadow: 0 0 0 3px rgba(204,51,51,.12) !important;
+    }
+
+    /* ===== 作業明細（コンパクト一覧） ===== */
+    .detail-item{
+      border: 1px dashed #c7ccd6;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 12px;
+      background: rgba(255,255,255,.7);
+    }
+
+    .detail-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom: 8px;
+    }
+    .detail-head strong{
+      font-size: 16px;
+    }
+
+    .detail-rows{
+      display:flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* ラベル＋入力を必ず1行に */
+    .drow{
+      display:grid;
+      grid-template-columns: 110px 1fr;
+      gap: 10px;
+      align-items:center;
+    }
+
+    /* time + nowボタン */
+    .time-wrap{
+      display:flex;
+      gap: 8px;
+      align-items:center;
+    }
+    .btn.now{
+      padding: 10px 10px;
+      border-radius: 10px;
+      border: 1px solid #cfd4dc;
+      background:#fff;
+      font-weight: 900;
+      font-size: 14px;
+      min-width: 58px;
+    }
+
+    /* 削除は備考の下で小さく */
+    .delete-row{
+      display:flex;
+      justify-content:flex-end;
+      margin-top: 8px;
+    }
+    .btn.delete-mini{
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 13px;
+    }
+
+    /* 作業明細カード内の「明細追加」ボタン（業務内容の下に配置） */
+    .add-detail-footer{
+      margin-top: 12px;
+    }
+    .btn.add-wide{
+      width: 100%;
+      font-size: 16px;
+      padding: 12px 14px;
+    }
+
+    /* レスポンシブ（1行維持。幅が厳しい時だけラベル幅を縮める） */
+    @media (max-width: 520px){
+      .wrap{ padding: 14px; }
+      .row{ grid-template-columns: 110px 1fr; }
+      .drow{ grid-template-columns: 92px 1fr; }
+      .row2{ grid-template-columns: 1fr; }
+      .footer-row{ flex-direction: column; align-items: stretch; }
+      pre{ max-height: 420px; }
+      .btn{ width: 100%; }
+      .btn.now{ width: auto; }
+      .btn.delete-mini{ width: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <div>
+        <h1>戸塚青果市場　配送員日報</h1>
+        <div class="sub"></div>
+      </div>
+    </div>
+
+    <div class="error-banner" id="errorBanner"></div>
+
+    <div class="card">
+      <div class="section-title">
+        <h2>基本情報</h2>
+      </div>
+
+      <div class="row">
+        <label>報告日<span class="hint">必須</span></label>
+        <input id="reportDate" type="date" />
+      </div>
+
+      <div class="row">
+        <label>名前<span class="hint">必須</span></label>
+        <select id="workerSelect"></select>
+      </div>
+
+      <div class="row2" style="margin-top:10px;">
+        <div class="row" style="margin:0;">
+          <label>車種<span class="hint">必須</span></label>
+          <select id="vehicleTypeSelect"></select>
+        </div>
+        <div class="row" style="margin:0;">
+          <label>車両番号<span class="hint">必須</span></label>
+          <select id="vehicleNoSelect"></select>
+        </div>
+      </div>
+
+      <div class="row2" style="margin-top:10px;">
+        <div class="row" style="margin:0;">
+          <label>メーター開始</label>
+          <input id="meterStart" type="number" inputmode="numeric" />
+        </div>
+        <div class="row" style="margin:0;">
+          <label>メーター終了</label>
+          <input id="meterEnd" type="number" inputmode="numeric" />
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">
+        <h3 style="margin:0;">作業明細</h3>
+      </div>
+      <div class="muted" style="margin-top:6px;">タスク → チェーン → 店舗 は連動します</div>
+
+      <div id="detailsContainer"></div>
+
+      <!-- ✅ ボタンは作業明細ヘッダではなく、業務内容（一覧）の下に配置 -->
+      <div class="add-detail-footer">
+        <button class="btn add-wide" id="addDetailBtn" type="button">＋ 明細追加</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="footer-row">
+        <button class="btn primary" id="submitBtn" type="button">送信</button>
+        <div class="statusline muted">
+          Lookup URL: <code id="lu"></code>
+          <span id="luStatus"></span>
+        </div>
+      </div>
+      <pre id="log"></pre>
+    </div>
+  </div>
+
+<script>
+  // =========================
+  // 設定（ここだけ触ればOK）
+  // =========================
+  const LOOKUP_URL = "/api/lookups";
+  const CREATE_URL = "/api/report";
+
+  // ✅ Lookupの「どのフィールドを表示/値にするか」を吸収するマップ
+  const MAP = {
+    worker: {
+      value: (w) => w.id,
+      label: (w) => w.title ?? w.fields?.Title ?? "",
+    },
+    vehicle: {
+      value: (v) => v.id,
+      label: (v) => v.title ?? v.fields?.Title ?? "",
+      type:  (v) => v.fields?.field_1 ?? "",
+    },
+    task: {
+      value: (t) => t.id,
+      label: (t) => t.title ?? t.fields?.Title ?? "",
+    },
+    chain: {
+      value: (c) => c.id,
+      label: (c) => {
+        const code = c.title ?? "";
+        const name = c.fields?.field_1 ?? "";
+        return name ? `${code}（${name}）` : code;
+      },
+      groupKey: (c) => String(c.fields?.taskLookupId ?? ""),
+    },
+    store: {
+      value: (s) => s.id,
+      label: (s) => {
+        const code = s.fields?.Storecode ? `${s.fields.Storecode} ` : "";
+        const name = s.title ?? s.fields?.Title ?? "";
+        return code + name;
+      },
+      groupKey: (s) => String(s.fields?.ChainLookupId ?? ""),
+    }
+  };
+
+  let LOOKUPS = null;
+
+  boot().catch(err => {
+    document.getElementById("log").textContent =
+      "❌ init error:\n" + (err?.stack || err);
+  });
+
+  async function boot(){
+    document.getElementById("lu").textContent = LOOKUP_URL;
+    document.getElementById("reportDate").value = toDateInputValue(new Date());
+
+    const log = document.getElementById("log");
+    log.textContent = "fetch:\n" + JSON.stringify({ LOOKUP_URL }, null, 2) + "\n";
+
+    const res = await fetch(LOOKUP_URL, { cache: "no-store" });
+    const raw = await res.text();
+
+    if(!res.ok){
+      document.getElementById("luStatus").innerHTML = ` <span class="ng">HTTP ${res.status}</span>`;
+      log.textContent += "\n❌ response:\n" + raw;
+      throw new Error("LOOKUP HTTP " + res.status);
+    }
+
+    let json;
+    try { json = JSON.parse(raw); }
+    catch(e){
+      document.getElementById("luStatus").innerHTML = ` <span class="ng">JSON parse failed</span>`;
+      log.textContent += "\n❌ response(raw):\n" + raw;
+      throw e;
+    }
+
+    if(!json.ok){
+      document.getElementById("luStatus").innerHTML = ` <span class="ng">ok:false</span>`;
+      log.textContent += "\n❌ json:\n" + JSON.stringify(json, null, 2);
+      throw new Error("LOOKUP ok:false");
+    }
+
+    LOOKUPS = json;
+    document.getElementById("luStatus").innerHTML = ` <span class="ok">ok</span>`;
+
+    fillWorker(LOOKUPS.worker || []);
+    fillVehicleTypes(LOOKUPS.vehicle || []);
+    fillVehicleNos();
+
+    addDetailItem();
+
+    document.getElementById("addDetailBtn").addEventListener("click", () => addDetailItem());
+    document.getElementById("submitBtn").addEventListener("click", onSubmit);
+    document.getElementById("vehicleTypeSelect").addEventListener("change", fillVehicleNos);
+
+    log.textContent += "\n✅ counts:\n" + JSON.stringify({
+      worker: (LOOKUPS.worker||[]).length,
+      vehicle: (LOOKUPS.vehicle||[]).length,
+      task: (LOOKUPS.task||[]).length,
+      chain: (LOOKUPS.chain||[]).length,
+      store: (LOOKUPS.store||[]).length,
+    }, null, 2);
+  }
+
+  function clearErrors(){
+    document.getElementById("errorBanner").classList.remove("show");
+    document.getElementById("errorBanner").textContent = "";
+
+    const ids = ["reportDate","workerSelect","vehicleTypeSelect","vehicleNoSelect"];
+    ids.forEach(id => document.getElementById(id).classList.remove("is-error"));
+    document.querySelectorAll(".detail-item").forEach(d => d.classList.remove("is-error"));
+  }
+
+  function showError(messages){
+    const banner = document.getElementById("errorBanner");
+    banner.textContent = "入力を確認してください：\n" + messages.map(m => "・" + m).join("\n");
+    banner.classList.add("show");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function validateBeforeSubmit(){
+    clearErrors();
+
+    const errors = [];
+
+    const reportDate = document.getElementById("reportDate");
+    const worker = document.getElementById("workerSelect");
+    const vehicleType = document.getElementById("vehicleTypeSelect");
+    const vehicleNo = document.getElementById("vehicleNoSelect");
+
+    if(!reportDate.value){
+      errors.push("報告日を選択してください");
+      reportDate.classList.add("is-error");
+    }
+    if(!worker.value){
+      errors.push("名前を選択してください");
+      worker.classList.add("is-error");
+    }
+    if(!vehicleType.value){
+      errors.push("車種を選択してください");
+      vehicleType.classList.add("is-error");
+    }
+    if(!vehicleNo.value){
+      errors.push("車両番号を選択してください");
+      vehicleNo.classList.add("is-error");
+    }
+
+    // 明細：1件も入力が無い場合はエラー（作業日報として最低1件）
+    const detailsContainer = document.getElementById("detailsContainer");
+    const details = [...detailsContainer.children].map(readDetailData)
+      .filter(d => d.taskId || d.chainId || d.storeId || d.startTime || d.endTime || d.note);
+
+    if(details.length === 0){
+      errors.push("作業明細を1件以上入力してください");
+      const first = detailsContainer.querySelector(".detail-item");
+      if(first) first.classList.add("is-error");
+    }
+
+    // 明細：入力されている行は task 必須
+    [...detailsContainer.children].forEach((row, i) => {
+      const d = readDetailData(row);
+      const hasAny = d.taskId || d.chainId || d.storeId || d.startTime || d.endTime || d.note;
+      if(hasAny && !d.taskId){
+        errors.push(`業務内容 ${i+1}：タスクを選択してください`);
+        row.classList.add("is-error");
+      }
+    });
+
+    if(errors.length){
+      showError(errors);
+      return false;
+    }
+    return true;
+  }
+
+  function readDetailData(row){
+    const get = (name) => row.querySelector(`[data-field="${name}"]`)?.value ?? "";
+    return {
+      startTime: get("startTime"),
+      endTime: get("endTime"),
+      taskId: get("task"),
+      chainId: get("chain"),
+      storeId: get("store"),
+      note: get("note"),
+    };
+  }
+
+  function applyDetailData(row, data){
+    if(!data) return;
+
+    const taskSel  = row.querySelector('select[data-field="task"]');
+    const chainSel = row.querySelector('select[data-field="chain"]');
+    const storeSel = row.querySelector('select[data-field="store"]');
+
+    // start/end
+    const setVal = (name, v) => {
+      const el = row.querySelector(`[data-field="${name}"]`);
+      if(el) el.value = v ?? "";
+    };
+    setVal("startTime", data.startTime || "");
+    setVal("endTime", data.endTime || "");
+
+    // task
+    if(taskSel){
+      taskSel.value = String(data.taskId || "");
+      const taskId = taskSel.value;
+      const chains = (LOOKUPS.chain || []).filter(c => MAP.chain.groupKey(c) === String(taskId));
+      fillChain(chainSel, chains, !taskId);
+    }
+
+    // chain
+    if(chainSel){
+      chainSel.value = String(data.chainId || "");
+      const chainId = chainSel.value;
+      const stores = (LOOKUPS.store || []).filter(s => MAP.store.groupKey(s) === String(chainId));
+      fillStore(storeSel, stores, !chainId);
+    }
+
+    // store
+    if(storeSel){
+      storeSel.value = String(data.storeId || "");
+    }
+
+    setVal("note", data.note || "");
+  }
+
+  function addDetailItem(copyFromData){
+    const container = document.getElementById("detailsContainer");
+    const idx = container.children.length + 1;
+
+    const div = document.createElement("div");
+    div.className = "detail-item";
+    div.dataset.index = String(idx);
+
+    // ✅ 順番：開始 → 終了 → タスク → チェーン → 店舗 → 備考 → 削除（小さく）
+    div.innerHTML = `
+      <div class="detail-head">
+        <strong>業務内容 ${idx}</strong>
+      </div>
+
+      <div class="detail-rows">
+        <div class="drow">
+          <label>開始時間</label>
+          <div class="time-wrap">
+            <input data-field="startTime" type="time" />
+            <button class="btn now" type="button" data-action="now-start">今</button>
+          </div>
+        </div>
+
+        <div class="drow">
+          <label>終了時間</label>
+          <div class="time-wrap">
+            <input data-field="endTime" type="time" />
+            <button class="btn now" type="button" data-action="now-end">今</button>
+          </div>
+        </div>
+
+        <div class="drow">
+          <label>タスク<span class="hint">必須（入力する場合）</span></label>
+          <select data-field="task"></select>
+        </div>
+
+        <div class="drow">
+          <label>チェーン</label>
+          <select data-field="chain"></select>
+        </div>
+
+        <div class="drow">
+          <label>店舗</label>
+          <select data-field="store"></select>
+        </div>
+
+        <div class="drow">
+          <label>備考</label>
+          <input data-field="note" type="text" />
+        </div>
+
+        <div class="delete-row">
+          <button class="btn danger delete-mini" type="button" data-action="remove">削除</button>
+        </div>
+      </div>
+    `;
+
+    // remove
+    div.querySelector('[data-action="remove"]').addEventListener("click", () => {
+      div.remove();
+      renumberDetails();
+    });
+
+    // now buttons
+    div.querySelector('[data-action="now-start"]').addEventListener("click", () => {
+      setNowTime(div.querySelector('input[data-field="startTime"]'));
+    });
+    div.querySelector('[data-action="now-end"]').addEventListener("click", () => {
+      setNowTime(div.querySelector('input[data-field="endTime"]'));
+    });
+
+    const taskSel  = div.querySelector('select[data-field="task"]');
+    const chainSel = div.querySelector('select[data-field="chain"]');
+    const storeSel = div.querySelector('select[data-field="store"]');
+
+    fillTask(taskSel, LOOKUPS.task || []);
+    fillChain(chainSel, [], true);
+    fillStore(storeSel, [], true);
+
+    taskSel.addEventListener("change", () => {
+      const taskId = taskSel.value;
+      const chains = (LOOKUPS.chain || []).filter(c => MAP.chain.groupKey(c) === String(taskId));
+      fillChain(chainSel, chains, !taskId);
+      fillStore(storeSel, [], true);
+      storeSel.value = "";
+    });
+
+    chainSel.addEventListener("change", () => {
+      const chainId = chainSel.value;
+      const stores = (LOOKUPS.store || []).filter(s => MAP.store.groupKey(s) === String(chainId));
+      fillStore(storeSel, stores, !chainId);
+      storeSel.value = "";
+    });
+
+    container.appendChild(div);
+
+    if(copyFromData){
+      applyDetailData(div, copyFromData);
+    }
+
+    renumberDetails();
+  }
+
+  function renumberDetails(){
+    const container = document.getElementById("detailsContainer");
+    [...container.children].forEach((el, i) => {
+      el.dataset.index = String(i+1);
+      const title = el.querySelector("strong");
+      if(title) title.textContent = `業務内容 ${i+1}`;
+    });
+  }
+
+  function setNowTime(inputEl){
+    if(!inputEl) return;
+    const d = new Date();
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    inputEl.value = `${hh}:${mm}`;
+    inputEl.focus();
+  }
+
+  async function onSubmit(){
+    if(!validateBeforeSubmit()){
+      return;
+    }
+
+    const log = document.getElementById("log");
+    log.textContent = "";
+
+    const reportDate = document.getElementById("reportDate").value;
+    const workerId   = document.getElementById("workerSelect").value;
+    const workerName = document.getElementById("workerSelect").selectedOptions?.[0]?.textContent || "";
+
+    const vehicleType = document.getElementById("vehicleTypeSelect").value;
+    const vehicleId   = document.getElementById("vehicleNoSelect").value;
+    const vehicleNo   = document.getElementById("vehicleNoSelect").selectedOptions?.[0]?.textContent || "";
+
+    const meterStart = numberOrNull(document.getElementById("meterStart").value);
+    const meterEnd   = numberOrNull(document.getElementById("meterEnd").value);
+
+    const detailsContainer = document.getElementById("detailsContainer");
+    const details = [...detailsContainer.children].map((row) => {
+      const get = (name) => row.querySelector(`[data-field="${name}"]`)?.value ?? "";
+      return {
+        taskId: get("task"),
+        chainId: get("chain"),
+        storeId: get("store"),
+        startTime: get("startTime"),
+        endTime: get("endTime"),
+        note: get("note"),
+      };
+    }).filter(d => d.taskId || d.chainId || d.storeId || d.startTime || d.endTime || d.note);
+
+    const requestId = autoRequestId(reportDate);
+
+    const payload = {
+      requestId,
+      reportDate,
+      workerId,
+      workerName,
+      vehicleType,
+      vehicleId,
+      vehicleNo,
+      meterStart,
+      meterEnd,
+      details,
+    };
+
+    log.textContent = "SENT payload:\n" + JSON.stringify(payload, null, 2);
+
+    try{
+      const res = await fetch(CREATE_URL, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json().catch(() => ({}));
+      log.textContent += "\n\nRESPONSE:\n" + JSON.stringify(json, null, 2);
+    }catch(e){
+      log.textContent += "\n\n(送信失敗)\n" + (e?.stack || e);
+    }
+  }
+
+  function fillWorker(workers){
+    const sel = document.getElementById("workerSelect");
+    sel.innerHTML = `<option value="">選択</option>` +
+      workers.map(w => `<option value="${escapeHtml(MAP.worker.value(w))}">${escapeHtml(MAP.worker.label(w))}</option>`).join("");
+  }
+
+  function fillVehicleTypes(vehicles){
+    const types = [...new Set(vehicles.map(v => MAP.vehicle.type(v)).filter(Boolean))].sort();
+    const sel = document.getElementById("vehicleTypeSelect");
+    sel.innerHTML = `<option value="">選択</option>` +
+      types.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
+  }
+
+  function fillVehicleNos(){
+    const vehicles = LOOKUPS.vehicle || [];
+    const type = document.getElementById("vehicleTypeSelect").value;
+    const filtered = type ? vehicles.filter(v => MAP.vehicle.type(v) === type) : vehicles;
+
+    const sel = document.getElementById("vehicleNoSelect");
+    sel.innerHTML = `<option value="">選択</option>` +
+      filtered.map(v => `<option value="${escapeHtml(MAP.vehicle.value(v))}">${escapeHtml(MAP.vehicle.label(v))}</option>`).join("");
+  }
+
+  function fillTask(sel, tasks){
+    sel.innerHTML = `<option value="">選択</option>` +
+      tasks.map(t => `<option value="${escapeHtml(MAP.task.value(t))}">${escapeHtml(MAP.task.label(t))}</option>`).join("");
+  }
+
+  function fillChain(sel, chains, disabled){
+    sel.disabled = !!disabled;
+    sel.innerHTML = `<option value="">選択</option>` +
+      (chains || []).filter(c => MAP.chain.label(c)).map(c => {
+        return `<option value="${escapeHtml(MAP.chain.value(c))}">${escapeHtml(MAP.chain.label(c))}</option>`;
+      }).join("");
+  }
+
+  function fillStore(sel, stores, disabled){
+    sel.disabled = !!disabled;
+    sel.innerHTML = `<option value="">選択</option>` +
+      (stores || []).filter(s => MAP.store.label(s)).map(s => {
+        return `<option value="${escapeHtml(MAP.store.value(s))}">${escapeHtml(MAP.store.label(s))}</option>`;
+      }).join("");
+  }
+
+  function toDateInputValue(d){
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function autoRequestId(reportDate){
+    const t = new Date();
+    const hh = String(t.getHours()).padStart(2,"0");
+    const mm = String(t.getMinutes()).padStart(2,"0");
+    const ss = String(t.getSeconds()).padStart(2,"0");
+    const ymd = (reportDate || toDateInputValue(t)).replaceAll("-","");
+    return `REQ-${ymd}-${hh}${mm}${ss}`;
+  }
+
+  function numberOrNull(v){
+    if(v === "" || v == null) return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function escapeHtml(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#39;");
+  }
+</script>
+</body>
+</html>
